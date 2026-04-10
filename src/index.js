@@ -8,7 +8,24 @@ const transactionRoutes = require('./routes/transactionRoutes');
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = [
+  'https://finance-tracker-cunywtj0p-kevins-projects-31ae7e0d.vercel.app',
+  'http://localhost:5173',
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permite peticiones sin origen (ej. Postman, curl) y orígenes permitidos
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 app.use(express.json());
 
 // Rutas
@@ -21,6 +38,6 @@ app.get('/', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`);
 });
