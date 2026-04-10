@@ -1,6 +1,5 @@
 const pool = require('../db');
 
-// Obtener todas las transacciones del usuario autenticado
 const getTransactions = async (req, res) => {
   try {
     const result = await pool.query(
@@ -14,16 +13,18 @@ const getTransactions = async (req, res) => {
   }
 };
 
-// Crear una nueva transacción
 const createTransaction = async (req, res) => {
   const { type, category, amount, description, date } = req.body;
+
+  // Normalizamos la categoría — primera letra mayúscula, resto minúsculas
+  const normalizedCategory = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
 
   try {
     const result = await pool.query(
       `INSERT INTO transactions (user_id, type, category, amount, description, date)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [req.user.id, type, category, amount, description, date]
+      [req.user.id, type, normalizedCategory, amount, description, date]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -32,20 +33,20 @@ const createTransaction = async (req, res) => {
   }
 };
 
-// Editar una transacción existente
 const updateTransaction = async (req, res) => {
   const { id } = req.params;
   const { type, category, amount, description, date } = req.body;
 
+  // Normalizamos la categoría igual que en create
+  const normalizedCategory = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+
   try {
-    // Verificamos que la transacción pertenece al usuario autenticado
-    // Esto evita que un usuario edite transacciones de otro usuario
     const result = await pool.query(
       `UPDATE transactions
        SET type = $1, category = $2, amount = $3, description = $4, date = $5
        WHERE id = $6 AND user_id = $7
        RETURNING *`,
-      [type, category, amount, description, date, id, req.user.id]
+      [type, normalizedCategory, amount, description, date, id, req.user.id]
     );
 
     if (result.rows.length === 0) {
@@ -59,12 +60,10 @@ const updateTransaction = async (req, res) => {
   }
 };
 
-// Eliminar una transacción
 const deleteTransaction = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // Igual que en update — verificamos que sea del usuario autenticado
     const result = await pool.query(
       'DELETE FROM transactions WHERE id = $1 AND user_id = $2 RETURNING *',
       [id, req.user.id]
@@ -81,7 +80,6 @@ const deleteTransaction = async (req, res) => {
   }
 };
 
-// Resumen de transacciones por categoría
 const getSummary = async (req, res) => {
   try {
     const result = await pool.query(
@@ -96,22 +94,14 @@ const getSummary = async (req, res) => {
       [req.user.id]
     );
 
-    // Separamos ingresos y gastos en dos listas
     const income = result.rows.filter(row => row.type === 'income');
     const expenses = result.rows.filter(row => row.type === 'expense');
 
-    // Calculamos el balance total
     const totalIncome = income.reduce((sum, row) => sum + parseFloat(row.total), 0);
     const totalExpenses = expenses.reduce((sum, row) => sum + parseFloat(row.total), 0);
     const balance = totalIncome - totalExpenses;
 
-    res.json({
-      balance,
-      totalIncome,
-      totalExpenses,
-      income,
-      expenses
-    });
+    res.json({ balance, totalIncome, totalExpenses, income, expenses });
   } catch (error) {
     console.error('Error en getSummary:', error.message);
     res.status(500).json({ error: 'Error interno del servidor' });
