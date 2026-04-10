@@ -9,14 +9,14 @@ const transactionRoutes = require('./routes/transactionRoutes');
 const app = express();
 
 const allowedOrigins = [
-  'https://finance-tracker-delta-sooty.vercel.app',
-  'http://localhost:5173',
+  /^https:\/\/finance-tracker[a-z0-9-]*\.vercel\.app$/,
+  /^http:\/\/localhost:\d+$/,
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
     // Permite peticiones sin origen (ej. Postman, curl) y orígenes permitidos
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.some((pattern) => pattern.test(origin))) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
