@@ -8,23 +8,8 @@ const transactionRoutes = require('./routes/transactionRoutes');
 
 const app = express();
 
-const allowedOrigins = [
-  /^https:\/\/finance-tracker[a-z0-9-]*\.vercel\.app$/,
-  /^http:\/\/localhost:\d+$/,
-];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // Permite peticiones sin origen (ej. Postman, curl) y orígenes permitidos
-    if (!origin || allowedOrigins.some((pattern) => pattern.test(origin))) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+app.use(cors());
+app.options('*', cors());
 
 app.use(express.json());
 
