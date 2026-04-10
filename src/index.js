@@ -9,7 +9,7 @@ const transactionRoutes = require('./routes/transactionRoutes');
 const app = express();
 
 const allowedOrigins = [
-  'https://finance-tracker-cunywtj0p-kevins-projects-31ae7e0d.vercel.app',
+  'https://finance-tracker-delta-sooty.vercel.app',
   'http://localhost:5173',
 ];
 
